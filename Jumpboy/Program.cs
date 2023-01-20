@@ -97,13 +97,15 @@ while (Raylib.WindowShouldClose() == false)
     else if (currentScene == "end")
     { 
     Raylib.ClearBackground(Color.RED);
-    Raylib.DrawText("YOU DIED", 300, 400, 80, Color.BLACK);
-    Raylib.DrawText("Fuck you, you stupid fucking cunt ", 5, 500, 25, Color.BLACK);
-     Raylib.DrawText("You will never achieve anything in your pityfull life ", 5, 540, 25, Color.BLACK);
-     Raylib.DrawText("you stupid fuckpig faggot whore, looking like a retarded fat cumslut bitch", 5, 580, 25, Color.BLACK);
-     Raylib.DrawText("suck my fat knob or i will slaughter your entire bloodline", 5, 620, 25, Color.BLACK);
-     Raylib.DrawText("You are more worthless than an dead fetus. I hope you suffer", 5, 660, 25, Color.BLACK);
-     
+    Raylib.DrawText("YOU DIED", 250, 400, 80, Color.BLACK);
+    Raylib.DrawText("press enter to start again", 250, 500, 25, Color.BLACK);
+    if(Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER)){
+        death = false;
+    currentScene = "screenOne";
+    playerRect.x = 0;
+    playerRect.y = 890;
+    }
+    
      
      
 
