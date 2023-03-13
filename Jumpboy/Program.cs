@@ -2,37 +2,45 @@
 using System.Numerics;
 
 float speed = 5;
-int groundY = 950;
-int playerSpeedY = 0;
 int playerHeight = 20;
 int playerWidth = 20;
 
+float gravity = 1f;
 
-//If jump is false, you can jump
-Boolean jump = false;
+
+
+Boolean mayJump = false;
 Boolean death = false;
+
 
 string currentScene = "start";
 
-
+bool hasDisarmedTrap = false;
+bool onPlat = false;
 
 //sets the size of screen and frames per second
 Raylib.InitWindow(1000, 1000, "Jump boy");
 Raylib.SetTargetFPS(60);
 
 //Creates a rectangle called player rect, which width and height is a variable
-Rectangle playerRect = new Rectangle(0, 900, playerWidth, playerHeight);
+Rectangle button = new Rectangle(100, 900, 40, 40);
 
 //Creates a list for rectangular platforms
 List<Rectangle> platforms = new List<Rectangle>();
 List<Rectangle> traps = new List<Rectangle>();
 
+Player player1 = new Player();
+player1.velocity = Vector2.Zero;
+player1.boundingBox = new Rectangle(0, 830, playerWidth, playerHeight);
 
-Vector2 movement = Vector2.Zero;
+
+
 
 //while the game is running
 while (Raylib.WindowShouldClose() == false)
 {
+
+
 
     if (currentScene == "start")
     {
@@ -43,217 +51,182 @@ while (Raylib.WindowShouldClose() == false)
         {
             currentScene = "screenOne";
             platforms.Clear();
+            traps.Clear();
             platforms.Add(new Rectangle(0, 900, 100, 30));
-            platforms.Add(new Rectangle(100, 750, 100, 30));
-            platforms.Add(new Rectangle(400, 700, 100, 30));
+            platforms.Add(new Rectangle(90, 750, 100, 30));
+            platforms.Add(new Rectangle(350, 700, 100, 30));
             platforms.Add(new Rectangle(200, 500, 100, 30));
             platforms.Add(new Rectangle(500, 450, 100, 30));
-         
             platforms.Add(new Rectangle(600, 300, 100, 30));
             platforms.Add(new Rectangle(700, 200, 100, 30));
             traps.Add(new Rectangle(0, 949, 1000, 70));
-          
+
         }
     }
-
-   
-
-
     else if (currentScene == "screenOne")
     {
-        if (Raylib.CheckCollisionRecs(playerRect, platforms[0]))
-        {
-            playerRect.y -= movement.Y;
-            playerSpeedY = 0;
-            jump = false;
-            // playerRect.x -= movement.X;
-        }
-        if (playerRect.y + playerHeight < 0)
+        if (player1.boundingBox.y + playerHeight < 0)
         {
             currentScene = "screenTwo";
             platforms.Clear();
             traps.Clear();
-            platforms.Add(new Rectangle(0, 900, 100, 30));
+            platforms.Add(new Rectangle(700, 950, 200, 30));
+            platforms.Add(new Rectangle(870, 600, 100, 30));
             platforms.Add(new Rectangle(300, 758, 100, 30));
-            platforms.Add(new Rectangle(700, 70, 100, 30));
-            platforms.Add(new Rectangle(90, 570, 100, 30));
-            playerRect.y = 950;
+            platforms.Add(new Rectangle(90, 570, 80, 30));
+            platforms.Add(new Rectangle(600, 750, 100, 30));
+            platforms.Add(new Rectangle(720, 480, 100, 30));
+            platforms.Add(new Rectangle(490, 440, 30, 30));
+            platforms.Add(new Rectangle(0, 440, 30, 30));
+            platforms.Add(new Rectangle(0, 240, 30, 30));
+            platforms.Add(new Rectangle(240, 200, 15, 15));
+            traps.Add(new Rectangle(60, 240, 30, 30));
+            traps.Add(new Rectangle(750, 450, 50, 30));
+            traps.Add(new Rectangle(0, 949, 700, 70));
+            traps.Add(new Rectangle(900, 949, 100, 70));
+            traps.Add(new Rectangle(400, 500, 30, 400));
+            player1.boundingBox.y = 950;
         }
     }
-
     else if (currentScene == "screenTwo")
     {
 
-
-        if (Raylib.CheckCollisionRecs(playerRect, platforms[0]))
+        if (player1.boundingBox.y + playerHeight < 0)
         {
-            playerRect.y -= movement.Y;
-            playerSpeedY = 0;
-            jump = false;
-            // playerRect.x -= movement.X;
+            currentScene = "screenThree";
+            platforms.Clear();
+            traps.Clear();
+            player1.boundingBox.y = 950;
+            traps.Add(new Rectangle(900, 949, 100, 70));
+            traps.Add(new Rectangle(400, 500, 30, 400));
+
+            hasDisarmedTrap = false;
+
         }
+
+    }
+
+    else if (currentScene == "screenThree")
+    {
+        if (player1.boundingBox.y + playerHeight < 0)
+        {
+            currentScene = "vicroy";
+            Raylib.DrawText("U win!!!!111!1", 400, 400, 80, Color.BLACK);
+        }
+
+        if (Raylib.CheckCollisionRecs(player1.boundingBox, button))
+        {
+            if (!hasDisarmedTrap)
+            {
+                traps.RemoveAt(0);
+                hasDisarmedTrap = true;
+            }
+
+        }
+
+
     }
 
     else if (currentScene == "end")
-    { 
-    Raylib.ClearBackground(Color.RED);
-    Raylib.DrawText("YOU DIED", 250, 400, 80, Color.BLACK);
-    Raylib.DrawText("press enter to start again", 250, 500, 25, Color.BLACK);
-    if(Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER)){
-        death = false;
-    currentScene = "screenOne";
-    playerRect.x = 0;
-    playerRect.y = 890;
-    }
-    
-     
-     
+    {
+        Raylib.ClearBackground(Color.RED);
+        Raylib.DrawText("YOU DIED", 250, 400, 80, Color.BLACK);
+        Raylib.DrawText("press enter to start again", 250, 500, 25, Color.BLACK);
+        if (Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER))
+        {
+            death = false;
+            currentScene = "start";
+            player1.boundingBox.x = 0;
+            player1.boundingBox.y = 890;
+        }
 
     }
 
     if (currentScene != "start" && currentScene != "end")
     {
-        //
-        movement = Vector2.Zero;
-     if (death == true) {
-        currentScene = "end";
-     }
-        Raylib.DrawRectangle(0, groundY, 1000, 60, Color.BLACK);
+        player1.velocity.X = 0;
 
-
-
-
-
-
-
+        if (death == true)
+        {
+            currentScene = "end";
+        }
 
         if (Raylib.IsKeyDown(KeyboardKey.KEY_D))
-
         {
-            movement.X = speed;
+            player1.velocity.X = speed;
         }
         else if (Raylib.IsKeyDown(KeyboardKey.KEY_A))
         {
-            movement.X = -speed;
+            player1.velocity.X = -speed;
         }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_SPACE))
+        if (mayJump && Raylib.IsKeyPressed(KeyboardKey.KEY_SPACE) && player1.velocity.Y >= 0)
         {
-            if (jump == false)
-            {
-                playerSpeedY = -20;
-
-                jump = true;
-
-            }
-
-        }
-
-
-        // says that the player rectangles X coordinate is being 
-        playerRect.x += movement.X;
-
-        foreach (Rectangle platform in platforms)
-        {
-            if (Raylib.CheckCollisionRecs(playerRect, platform))
-            {
-                playerRect.x -= movement.X;
-            }
-            
-        }
-
-
-
-        movement.Y = playerSpeedY;
-        playerRect.y += movement.Y;
-
-        // for (int i = 0; i < 5; i++) { i }
-        // foreach
-
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_ZERO)) {
-            death = true;
-        }
-
-
-
-
-        if (playerRect.y + playerHeight > groundY)
-        {
-            playerRect.y = groundY - playerHeight;
-
-            jump = false;
+            player1.velocity.Y -= 20;
         }
         else
         {
-            playerSpeedY++;
+            player1.velocity.Y += gravity;
         }
 
+        player1.boundingBox.x += player1.velocity.X;
+        player1.boundingBox.y += player1.velocity.Y;
 
+        onPlat = false;
+        mayJump = false;
+        foreach (Rectangle platform in platforms)
+        {
+            Raylib.DrawRectangleRec(platform, Color.GREEN);
 
-        if (playerRect.x < 0) {
-        playerRect.x = 0;
+            if (Raylib.CheckCollisionRecs(player1.boundingBox, platform))
+            {
+                onPlat = true;
+                mayJump = true;
+            }
         }
 
-      if (playerRect.x + playerWidth > 1000) {
-        playerRect.x = 1000 - playerWidth;
+    
+        
+        if (onPlat)
+        {
+            
+            player1.boundingBox.y -= player1.velocity.Y;
+            player1.velocity.Y = 0;
         }
 
-        // if (Raylib.IsKeyDown(KeyboardKey.KEY_S))
-        // {
-        //     playerRect.y += speed;
-        // }
+        if (player1.boundingBox.x < 0)
+        {
+            player1.boundingBox.x = 0;
+        }
 
-        // else if (Raylib.IsKeyDown(KeyboardKey.KEY_W))
-        // {
-        //     playerRect.y -= speed;
-        //}
+        if (player1.boundingBox.x + playerWidth > 1000)
+        {
+            player1.boundingBox.x = 1000 - playerWidth;
+        }
 
 
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.WHITE);
 
-        Raylib.DrawRectangleRec(playerRect, Color.BLUE);
+        Raylib.DrawRectangleRec(player1.boundingBox, Color.BLUE);
 
-
-
+        if (currentScene == "screenThree")
+        {
+            Raylib.DrawRectangleRec(button, Color.PINK);
+        }
 
 
         foreach (Rectangle trap in traps)
         {
             Raylib.DrawRectangleRec(trap, Color.RED);
-             if (Raylib.CheckCollisionRecs(playerRect, trap))
-             {
-                death = true;
-             }
-         
-            
-        }
-
-       
-
-
-
-
-
-
-
-
-        foreach (Rectangle platform in platforms)
-        {
-            Raylib.DrawRectangleRec(platform, Color.GREEN);
-             if (Raylib.CheckCollisionRecs(playerRect, platform))
+            if (Raylib.CheckCollisionRecs(player1.boundingBox, trap))
             {
-                playerRect.y -= movement.Y;
-                playerSpeedY = 0;
-                jump = false;
-                
-                // playerRect.x -= movement.X;
+                death = true;
             }
-            
-            
+
+
         }
 
-       
 
     }
 
