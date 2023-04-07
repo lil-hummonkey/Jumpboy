@@ -6,6 +6,10 @@ int playerHeight = 20;
 int playerWidth = 20;
 
 float gravity = 1f;
+float xVel = 2;
+float yVel = 0;
+int bulPosX = 600;
+int bulPosY = 600;
 
 
 
@@ -16,32 +20,51 @@ Boolean death = false;
 string currentScene = "start";
 
 bool hasDisarmedTrap = false;
-bool onPlat = false;
+bool hasTurnedRight = true;
 
 //sets the size of screen and frames per second
 Raylib.InitWindow(1000, 1000, "Jump boy");
 Raylib.SetTargetFPS(60);
+float time = 0;
 
-//Creates a rectangle called player rect, which width and height is a variable
+
+
+
 Rectangle button = new Rectangle(100, 900, 40, 40);
-
-//Creates a list for rectangular platforms
+Player player1 = new Player();
+Rectangle gun = new Rectangle(600, 600, 20, 5 );
 List<Rectangle> platforms = new List<Rectangle>();
 List<Rectangle> traps = new List<Rectangle>();
+Rectangle bullet = new Rectangle();
 
-Player player1 = new Player();
+
+
+
 player1.velocity = Vector2.Zero;
-player1.boundingBox = new Rectangle(0, 830, playerWidth, playerHeight);
+player1.boundingBox = new Rectangle(0, 700, playerWidth, playerHeight);
+bullet = new Rectangle(gun.x, gun.y, playerWidth, playerHeight);
 
-
-
-
-//while the game is running
 while (Raylib.WindowShouldClose() == false)
 {
+    time += Raylib.GetFrameTime();
 
+    float rotation = MathF.Atan2(player1.boundingBox.y - Raylib.GetMousePosition().Y,player1.boundingBox.x-Raylib.GetMousePosition().X)*Raylib.RAD2DEG;
+    
+     
+     if (hasTurnedRight)
+    {
+    rotation = ((rotation % 360) + 360) % 360; 
+    rotation = Math.Clamp(rotation, 90, 270);
+     }
+ 
+  else
+  {
+    rotation = Math.Clamp(rotation, -90, 90); 
+  }
+rotation += 180;
 
-
+  
+ 
     if (currentScene == "start")
     {
         Raylib.ClearBackground(Color.WHITE);
@@ -70,8 +93,8 @@ while (Raylib.WindowShouldClose() == false)
             currentScene = "screenTwo";
             platforms.Clear();
             traps.Clear();
-            platforms.Add(new Rectangle(700, 950, 200, 30));
-            platforms.Add(new Rectangle(870, 600, 100, 30));
+            platforms.Add(new Rectangle(700, 970, 200, 30));
+            platforms.Add(new Rectangle(870, 689, 100, 30));
             platforms.Add(new Rectangle(300, 758, 100, 30));
             platforms.Add(new Rectangle(90, 570, 80, 30));
             platforms.Add(new Rectangle(600, 750, 100, 30));
@@ -97,6 +120,7 @@ while (Raylib.WindowShouldClose() == false)
             platforms.Clear();
             traps.Clear();
             player1.boundingBox.y = 950;
+            platforms.Add(new Rectangle(0, 970, 1000, 30));
             traps.Add(new Rectangle(900, 949, 100, 70));
             traps.Add(new Rectangle(400, 500, 30, 400));
 
@@ -137,7 +161,7 @@ while (Raylib.WindowShouldClose() == false)
             death = false;
             currentScene = "start";
             player1.boundingBox.x = 0;
-            player1.boundingBox.y = 890;
+            player1.boundingBox.y = 700;
         }
 
     }
@@ -145,6 +169,15 @@ while (Raylib.WindowShouldClose() == false)
     if (currentScene != "start" && currentScene != "end")
     {
         player1.velocity.X = 0;
+        
+
+        gun.x = player1.boundingBox.x+10;
+        gun.y = player1.boundingBox.y+10;
+       
+        
+       
+
+        Raylib.DrawText($"time: {time}" , 10, 10, 20, Color.BLUE);
 
         if (death == true)
         {
@@ -154,45 +187,62 @@ while (Raylib.WindowShouldClose() == false)
         if (Raylib.IsKeyDown(KeyboardKey.KEY_D))
         {
             player1.velocity.X = speed;
+            hasTurnedRight = true;
         }
         else if (Raylib.IsKeyDown(KeyboardKey.KEY_A))
         {
             player1.velocity.X = -speed;
+            hasTurnedRight = false;
         }
-
         if (mayJump && Raylib.IsKeyPressed(KeyboardKey.KEY_SPACE) && player1.velocity.Y >= 0)
         {
-            player1.velocity.Y -= 20;
+            player1.velocity.Y -= 21;
         }
         else
         {
             player1.velocity.Y += gravity;
         }
 
-        player1.boundingBox.x += player1.velocity.X;
-        player1.boundingBox.y += player1.velocity.Y;
 
-        onPlat = false;
         mayJump = false;
+
         foreach (Rectangle platform in platforms)
         {
-            Raylib.DrawRectangleRec(platform, Color.GREEN);
-
             if (Raylib.CheckCollisionRecs(player1.boundingBox, platform))
             {
-                onPlat = true;
+                player1.boundingBox.x -= player1.velocity.X;
+
+                break;
+
+
+            }
+        }
+
+   
+
+
+        player1.boundingBox.y += player1.velocity.Y;
+
+        foreach (Rectangle platform in platforms)
+        {
+            if (Raylib.CheckCollisionRecs(player1.boundingBox, platform))
+            {
+                player1.boundingBox.y -= player1.velocity.Y;
+                player1.velocity.Y = 0;
+
+
                 mayJump = true;
             }
         }
 
-    
-        
-        if (onPlat)
+        // gå igenom alla lådor igen
+        // ångra y-förflyttning om kollision
+        foreach (Rectangle platform in platforms)
         {
-            
-            player1.boundingBox.y -= player1.velocity.Y;
-            player1.velocity.Y = 0;
+            Raylib.DrawRectangleRec(platform, Color.GREEN);
         }
+
+        player1.boundingBox.x += player1.velocity.X;
 
         if (player1.boundingBox.x < 0)
         {
@@ -204,17 +254,34 @@ while (Raylib.WindowShouldClose() == false)
             player1.boundingBox.x = 1000 - playerWidth;
         }
 
+        if (player1.boundingBox.y > 950)
+        {
+            player1.boundingBox.y = 950;
+        }
+
+      
+        yVel = player1.boundingBox.y - Raylib.GetMousePosition().Y / player1.boundingBox.x-Raylib.GetMousePosition().X;
+     
+
 
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.WHITE);
 
         Raylib.DrawRectangleRec(player1.boundingBox, Color.BLUE);
+        // Raylib.DrawRectangleRec(bullet, Color.BLUE);
+        Raylib.DrawRectanglePro(gun, new Vector2(0, 2.5f),rotation, Color.BLACK);
+       
+  
+      
+        
+
 
         if (currentScene == "screenThree")
         {
             Raylib.DrawRectangleRec(button, Color.PINK);
         }
 
+     
 
         foreach (Rectangle trap in traps)
         {
