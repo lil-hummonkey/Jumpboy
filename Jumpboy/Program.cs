@@ -1,6 +1,8 @@
-﻿global using Raylib_cs;
+﻿//use of raylib for its ease of access to features useful in game design
+global using Raylib_cs;
 global using System.Numerics;
 
+//variables declaration
 float speed = 5;
 int playerHeight = 25;
 int playerWidth = 17;
@@ -9,47 +11,60 @@ float shootCooldownValue = shootCooldownMax;
 float gravity = 1f;
 float time = 0;
 string currentScene = "start";
+float spawnTimer=5;
 
+//boolean declaration
 Boolean hasDisarmedTrap = false;
 Boolean hasTurnedRight = true;
 Boolean mayJump = false;
 Boolean death = false;
 Boolean drawButton = false;
-Boolean godmode = false;
+Boolean godmode = true;
 
 
-int spawnTimer = 0;
 
 
 //sets the size of screen and frames per second
+//Texture2D texture = Raylib.LoadTextureFromImage(image);
 Image image = Raylib.LoadImage("Bingbong.png");
-// Texture2D texture = Raylib.LoadTextureFromImage(image);
 Raylib.InitWindow(1380, 1000, "Jump boy");
 Raylib.SetTargetFPS(60);
 Rectangle button = new Rectangle(100, 900, 40, 40);
 Rectangle gun = new Rectangle(600, 600, 20, 5);
 Rectangle bullet = new Rectangle();
 Player player1 = new Player();
+//use of list for infinite possibilities for platforms/traps; otherwise (if array) each platform/trap would have to be declared in array. Lists can be dynamically resized
 List<Rectangle> platforms = new List<Rectangle>();
 List<Rectangle> traps = new List<Rectangle>();
+
+//Bullet and Enemy both use lists as lists are useful when elements are added and removed frequently
+
+//each new bullet is a unique one, this helps with declaring interractions with specific bullets (eg the right bullet disappears on impact). 
 List<Bullet> bullets = new();
+//each enemy has its own unique interraction with specific bullets, and each enemy spawns in a specific place, so list allows the amount of enemies per screen/in the game be infinite
 List<Enemy> enemies = new();
 player1.boundingBox = new Rectangle(0, 700, playerWidth, playerHeight);
 player1.velocity = Vector2.Zero;
 Vector2 bulletVel = new Vector2();
 
 
+//logic for game while it runs
 while (Raylib.WindowShouldClose() == false)
 {
-
+    //rotation variable is decided by the rsulting angle (arctan) of the mouse position and player position
     float rotation = MathF.Atan2
     (player1.boundingBox.y - Raylib.GetMousePosition().Y
     , player1.boundingBox.x - Raylib.GetMousePosition().X) * Raylib.RAD2DEG;
+
+    //säkerhetsställer att rotations värde är ett användbar tal, sedan stoppar rotation av gun om den åker bakom spelaren
     rotation = CheckRotation(hasTurnedRight, rotation);
     rotation += 180;
-
+   
+    //begin drawing due to drawing and logic are both under because of method
     Raylib.BeginDrawing();
 
+    
+    //defines which screen you are on; draws objects for respective screen
     switch (currentScene)
     {
 
@@ -70,7 +85,7 @@ while (Raylib.WindowShouldClose() == false)
             break;
 
 
-
+            //specifies which screen you are in by having the next scene be within the previous scenes case, so the screen doesnt constantly update the objects every frame and slow the fps
         case "intro":
 
             
@@ -118,7 +133,7 @@ while (Raylib.WindowShouldClose() == false)
 
 
 
-
+        //specifies that a button can be drawn within this scene
 
 
         case "screenTwo":
@@ -131,20 +146,31 @@ while (Raylib.WindowShouldClose() == false)
                 platforms.Clear();
                 traps.Clear();
                 player1.boundingBox.y = 950;
-                platforms.Add(new Rectangle(0, 970, 1000, 30));
-                traps.Add(new Rectangle(900, 949, 100, 70));
-                traps.Add(new Rectangle(400, 500, 30, 400));
+                platforms.Add(new Rectangle(100, 880, 100, 30));
+                platforms.Add(new Rectangle(250, 650, 100, 30));
+                platforms.Add(new Rectangle(150, 500, 100, 30));
+                platforms.Add(new Rectangle(700, 180, 100, 30));
+                platforms.Add(new Rectangle(685, 400, 100, 30));
+                platforms.Add(new Rectangle(770, 600, 100, 30));
+                platforms.Add(new Rectangle(820, 740, 100, 30));
+                platforms.Add(new Rectangle(900, 860, 100, 30));
+                traps.Add(new Rectangle(650, 49, 700, 70));
+                traps.Add(new Rectangle(650, 0, 30, 850));
+                button.y = 350;
+                button.x = 150;
                 hasDisarmedTrap = false;
-                spawnTimer++;
-                if (spawnTimer > 60)
-                {
-                    enemies.Add(new());
-                    spawnTimer = 0;
-                }
+                spawnTimer = 5;
+                
             }
             break;
 
+        //has specific definitions for screen 3
         case "screenThree":
+                if (spawnTimer <= 0)
+                {
+                    enemies.Add(new());
+                    spawnTimer = 5;
+                }
                 hasDisarmedTrap = CheckButtonCollision(hasDisarmedTrap, button, player1, traps);
 
             if (player1.boundingBox.y + playerHeight < 0)
@@ -152,15 +178,18 @@ while (Raylib.WindowShouldClose() == false)
             break;
 
 
-
+        //win screen
         case "vicroy":
 
             Raylib.DrawText("U win!!!!111!1", 400, 400, 80, Color.BLACK);
+            platforms.Clear();
+            traps.Clear();
+            drawButton=false;
             break;
 
 
 
-
+    //specifies that if case = end then you will be sent to "death screen", uses a method to check if a new scene should be started, and if so case = screenOne and seperately from that level 1 should be drawn (helps correct an error of jumbled scene definition)
         case "end":
 
             Raylib.ClearBackground(Color.RED);
@@ -181,34 +210,55 @@ while (Raylib.WindowShouldClose() == false)
 
 
 
-
+    //if the current scene is the start or end screen it ends drawing
     if (currentScene == "start" || currentScene == "end")
     {
         Raylib.EndDrawing();
         continue;
     }
 
+    //defines that bool death sends you to death screen
     if (death == true)
     {
         currentScene = "end";
 
     }
 
+    
     player1.velocity.X = 0;
     gun.x = player1.boundingBox.x + 10;
     gun.y = player1.boundingBox.y + 10;
     time = drawtimer(time);
 
+    //defines D as a move right button and A left move button
     hasTurnedRight = TurnRight(speed, hasTurnedRight, player1);
+   
+    //if mayjump is true, and you press SPACE you will jump, else you will fall
     JumpIf(gravity, mayJump, player1);
+   
+    //If player collides with platform player will stand on it, or be pushed away from it (exeption for semi-intentional bug with walljump)
     PlatformStand(player1, platforms);
 
+    
+    //players position is affected by velocity variable
     player1.boundingBox.y += player1.velocity.Y;
+    
+    //You can jump if you are on a platform or on the ground you can jump
     mayJump = CheckGround(player1, platforms);
+    
+    //draws platforms
     DrawPlatforms(platforms);
     player1.boundingBox.x += player1.velocity.X;
+    
+    //cooldown for gun and enemies using raylibs time counter
     shootCooldownValue -= Raylib.GetFrameTime();
+    spawnTimer -= Raylib.GetFrameTime();
+    
+    //stops player from moving out of bounds
     Boundries(playerWidth, player1);
+
+    //checks if cooldown is under 0 (0.5s after every shot) and if you pressed mouse1. If true then the bullets velocity is a vector of either the cosinus or sinus of the gun and bullet speed (10)
+    //also creates a new bullet by the position of the gun, and resets timer at the end
     shootCooldownValue = ShootBullets(shootCooldownValue, gun, bullets, bulletVel, rotation);
 
 
@@ -216,7 +266,8 @@ while (Raylib.WindowShouldClose() == false)
 
 
 
-
+    //Each enemy moves itself towards the player
+    //if a bullet in bullets class hits an enemy then the specific bullet and enemies remove bool will be true
     foreach (Enemy e in enemies)
     {
         e.speed.X = player1.boundingBox.x - e.rect.x;
@@ -236,38 +287,44 @@ while (Raylib.WindowShouldClose() == false)
         }
     }
 
-
+    //removes specific enemies/bullets if their respective killme bool is true
     bullets.RemoveAll(b => b.killme);
     enemies.RemoveAll(e => e.killme);
 
 
-
+    //updates all bullets in bullets list
     foreach (Bullet b in bullets)
     {
         b.Update();
     }
 
+    //checks if player has touched enemies, and if so returns death as true
     death = NewMethod(death, player1, enemies);
 
+    //draws background, player and bullets
     Raylib.ClearBackground(Color.WHITE);
-
     Raylib.DrawRectangleRec(player1.boundingBox, Color.BLUE);
     Raylib.DrawRectangleRec(bullet, Color.BLUE);
+    //draws gun, using DrawRectanglePro adds a rotation variable to it (called rotation), as to define its position according to mouse
     Raylib.DrawRectanglePro(gun, new Vector2(0, 2.5f), rotation, Color.BLACK);
 
+    //draws enemies/bullets in enemies/bullets list
     foreach (Enemy e in enemies)
     {
         e.Draw();
     }
-
-
     foreach (Bullet b in bullets)
     {
         b.Draw();
     }
 
+    //draws button if drawButton bool is true (drawButton is true on screens which need button within it)
     DrawButton(drawButton, button);
+    
+    //Defines that death will be returned true if player touches trap
     death = TrapDeath(death, player1, traps);
+
+    //draws text for intro screen (uses time variable to draw text according to time in game)
     if(currentScene=="intro"){
        
        if(time < 5){
@@ -283,12 +340,12 @@ while (Raylib.WindowShouldClose() == false)
             Raylib.DrawText("Move your character with WASD, turn left or right with A and D", 100, 385, 30, Color.BLACK);
             Raylib.DrawText("Aim your gun in front of you with your mouse. Shoot with [LEFT CLICK] ", 100, 435, 30, Color.BLACK);
             Raylib.DrawText("Don't touch anything red, and if enemies approach you shoot them to kill them", 100, 565, 30, Color.BLACK);
-        // Raylib.DrawTexture(texture,0,0,Color.WHITE);
+        
         
         }
     }
 
-
+    //godmode command for playtesting
     if (godmode == true)
     {
         if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
@@ -416,6 +473,7 @@ static void PlatformStand(Player player1, List<Rectangle> platforms)
         if (Raylib.CheckCollisionRecs(player1.boundingBox, platform))
         {
             player1.boundingBox.x -= player1.velocity.X;
+            
 
             break;
 
@@ -423,6 +481,7 @@ static void PlatformStand(Player player1, List<Rectangle> platforms)
         }
     }
 }
+
 
 static bool TrapDeath(bool death, Player player1, List<Rectangle> traps)
 {

@@ -1,7 +1,9 @@
 using Raylib_cs;
 using System.Numerics;
 
+//Specific class for Enemies so enemy variables are seperated from program.cs/so potential future unique enemies can be added
 
+//variables specific to enemy class
 public class Enemy {
     
     
@@ -25,6 +27,7 @@ public class Enemy {
 
     int damage;
 
+    //generates Enemy as a rectangle
     public Rectangle rect;
 
     public Enemy() {
@@ -35,7 +38,8 @@ public class Enemy {
     }
 
     
-
+    //declares that enemy rectangles position is changed using the speed vector to move towards player and said movement has the speed of maxEnemySpeed
+    //declares that enemy health is lowered by damage (for potential future use in a dynamic weapon system)
     public void Update()
     {
          
